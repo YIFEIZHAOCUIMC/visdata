@@ -1,0 +1,121 @@
+---
+title: "viz1"
+author: "Yifei Zhao"
+date: "2022-09-29"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggridges)
+```
+
+## R Markdown
+```{r}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728", "USC00519397", "USS0023B17S"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(
+      id, 
+      USW00094728 = "CentralPark_NY", 
+      USC00519397 = "Waikiki_HA",
+      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
+
+let's make a scatterplot
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point()
+```
+
+```{r}
+weather_df %>%
+  drop_na() %>%
+  filter(name == 'CentralPark_NY')%>%
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point()
+```
+
+```{r}
+plot_weather = 
+  weather_df %>%
+  ggplot(aes(x = tmin, y = tmax)) 
+plot_weather + geom_point()
+```
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name))
+```
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax, color = name)) + 
+  geom_point(alpha = .5) +
+  geom_smooth(se = FALSE)
+```
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax, color = name)) + 
+  geom_point(alpha = .5) +
+  geom_smooth(se = FALSE) + 
+  facet_grid(. ~ name)
+```
+
+```{r}
+ggplot(weather_df, aes(x = date, y = tmax, color = name)) + 
+  geom_point(aes(size = prcp), alpha = .5) +
+  geom_smooth(se = FALSE) + 
+  facet_grid(. ~ name)
+```
+
+```{r}
+ggplot(weather_df, aes(x = tmax, y = tmin)) + 
+  geom_hex()
+```
+
+```{r}
+# ggplot(weather_df, aes(x = tmax)) +
+#  geom_histogram()
+# ggplot(weather_df, aes(x = tmax, fill = name)) + 
+#   geom_histogram(position = "dodge", binwidth = 2)
+ggplot(weather_df, aes(x = tmax, fill = name)) + 
+  geom_density(alpha = .4, adjust = .5, color = "blue")
+```
+
+```{r}
+# ggplot(weather_df, aes(x = name, y = tmax)) + geom_boxplot()
+ggplot(weather_df, aes(x = name, y = tmax)) + 
+  geom_violin(aes(fill = name), alpha = .5) + 
+  stat_summary(fun = "median", color = "blue")
+```
+
+```{r}
+ggplot(weather_df, aes(x = tmax, y = name)) + 
+  geom_density_ridges(scale = .85)
+```
+
+## Saving and Embedding plots
+```{r}
+weather_plot = 
+  weather_df %>%
+  ggplot(aes(x = name, y = tmax, color = name)) +
+  geom_point(aes(size = prcp),alpha = .5)+
+  geom_smooth(se = FALSE)+
+  facet_grid(.~name)
+weather_plot
+
+ggsave("weather_plot.pdf", weather_plot, width = 8, height = 5)
+  
+```
+
+```{r, fig.width=10}
+weather_plot
+```
